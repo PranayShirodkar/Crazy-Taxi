@@ -18,12 +18,25 @@ class Base_Scene extends Scene {
         this.shapes = {
             'cube': new Cube(),
             'tri': new Triangle(),
+            'square': new Square(),
         };
 
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                {ambient: .4, diffusivity: .6, specularity: 1, color: hex_color("#ffffff")}),
+            road: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#2A2A2A")}),
+            lane_divider: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#FFFFFF")}),
+            sand: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, specularity: 1, color: hex_color("#C2B280")}),
+            mountain: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#696969")}),
+            mountain_tip: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 1, color: hex_color("#FFFFFF")}),
+            sky: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, specularity: 1, color: hex_color("#87CEEB")}),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -34,17 +47,20 @@ class Base_Scene extends Scene {
         // some initial setup.
 
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
-        if (!context.scratchpad.controls) {
+        /*if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(Mat4.translation(0, -10, -30));
-        }
+        }*/
+        program_state.set_camera(Mat4.translation(0, -10, -30));
         program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, 1, 100);
+            Math.PI / 4, context.width / context.height, 1, 250);
 
         // *** Lights: *** Values of vector or point lights.
-        const light_position = vec4(0, 5, 5, 1);
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+        //Changed light position
+        const light_position = vec4(0, -70, -20, 1);
+        //Increased brightness
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**5)];
     }
 }
 
@@ -66,7 +82,7 @@ export class Crazy_Taxi extends Base_Scene {
         // Add a button for controlling the scene.
         this.key_triggered_button("Right", ["d"], () => {
         });
-        this.key_triggered_button("Jump", ["w"], () => {
+        this.key_triggered_button("Jump", ["spacebar"], () => {
         });
     }
 
@@ -78,8 +94,34 @@ export class Crazy_Taxi extends Base_Scene {
         let model_transform = Mat4.identity();
 
         // Example for drawing a cube, you can remove this line if needed
-        this.shapes.tri.draw(context, program_state, model_transform.times(Mat4.translation(0,2,-2)), this.materials.plastic.override({color:gray}));
-        this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic.override({color:yellow}));
-        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,0,-4)), this.materials.plastic.override({color:yellow}));
+        //this.shapes.tri.draw(context, program_state, model_transform.times(Mat4.translation(0,2,-2)), this.materials.plastic.override({color:gray}));
+        //this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic.override({color:yellow}));
+        //this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,0,-4)), this.materials.plastic.override({color:yellow}));
+
+        //Code to draw background
+        //----------------------------------------------------------------------------------------------------------------------------------------
+        let road_transform = model_transform.times(Mat4.scale(20,1,200)).times(Mat4.translation(0,0.05,-.97)).times(Mat4.rotation(Math.PI/2,1,0,0));
+        this.shapes.square.draw(context, program_state, road_transform, this.materials.road);
+        
+        let lane_divider_transform = model_transform.times(Mat4.scale(.25,1,2)).times(Mat4.translation(0,.1,0)).times(Mat4.rotation(Math.PI/2,1,0,0));
+        for(let i = 0; i < 96; i+=5){
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i,0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i,0)), this.materials.lane_divider);
+        }
+        
+        let floor_transform = model_transform.times(Mat4.scale(180,1,200)).times(Mat4.translation(0,0,-.97)).times(Mat4.rotation(Math.PI/2,1,0,0));
+        this.shapes.square.draw(context, program_state, floor_transform, this.materials.sand);
+
+        let mountain_transform = model_transform.times(Mat4.scale(120,100,1)).times(Mat4.translation(0,.7,-210)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
+        this.shapes.tri.draw(context, program_state, mountain_transform, this.materials.mountain);
+        this.shapes.tri.draw(context, program_state, mountain_transform.times(Mat4.translation(0.6,-0.6,.1)), this.materials.mountain);
+        this.shapes.tri.draw(context, program_state, mountain_transform.times(Mat4.translation(-0.6,0.6,-.1)), this.materials.mountain);
+        let mountain_tip_transform = model_transform.times(Mat4.scale(37,30,1)).times(Mat4.translation(0,2.33,-209)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
+        this.shapes.tri.draw(context, program_state, mountain_tip_transform, this.materials.mountain_tip);
+        this.shapes.tri.draw(context, program_state, mountain_tip_transform.times(Mat4.translation(1.94,-1.94,0)), this.materials.mountain_tip);
+        this.shapes.tri.draw(context, program_state, mountain_tip_transform.times(Mat4.translation(-1.94,1.94,0)), this.materials.mountain_tip);
+
+        let sky_transform = model_transform.times(Mat4.scale(180,60,1)).times(Mat4.translation(0,1,-211));
+        this.shapes.square.draw(context, program_state, sky_transform, this.materials.sky);
     }
 }
