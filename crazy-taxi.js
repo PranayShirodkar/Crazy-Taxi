@@ -13,7 +13,8 @@ class Base_Scene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-        this.hover = this.swarm = false;
+        this.move_forward = false;
+        this.cam_z_loc = -30;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'cube': new Cube(),
@@ -47,18 +48,22 @@ class Base_Scene extends Scene {
         // some initial setup.
 
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
-        if (!context.scratchpad.controls) {
+        /*if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(Mat4.translation(0, -10, -30));
+        }*/
+        program_state.set_camera(Mat4.translation(0, -10, this.cam_z_loc));
+        if(this.move_forward){
+            this.cam_z_loc += 1;
         }
-        //program_state.set_camera(Mat4.translation(0, -10, -30));
+
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 250);
 
         // *** Lights: *** Values of vector or point lights.
         //Changed light position
-        const light_position = vec4(0, -70, -20, 1);
+        const light_position = vec4(0, -70, -5, 1);
         //Increased brightness
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**5)];
     }
@@ -74,7 +79,8 @@ export class Crazy_Taxi extends Base_Scene {
 
     constructor(){
         super();
-        this.move_forward = false;
+        this.far_z_loc = -218;
+        this.chunks = 0;
     }
 
     move() {
@@ -83,7 +89,11 @@ export class Crazy_Taxi extends Base_Scene {
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("Forward", ["w"], () => {this.move_forward = true});
+        this.key_triggered_button("Forward", ["w"], () => {
+            this.move_forward = true;
+        }, '#6E6460', () => {
+            this.move_forward = false;
+        });
         this.key_triggered_button("Left", ["a"], this.move);
         // Add a button for controlling the scene.
         this.key_triggered_button("Right", ["d"], () => {
@@ -106,6 +116,11 @@ export class Crazy_Taxi extends Base_Scene {
 
         //Code to draw background
         //----------------------------------------------------------------------------------------------------------------------------------------
+
+        if(this.move_forward){
+            this.far_z_loc -= 1;
+        }
+
         let road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945)).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, road_transform, this.materials.road);
         
@@ -118,21 +133,20 @@ export class Crazy_Taxi extends Base_Scene {
         let floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.97)).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, floor_transform, this.materials.sand);
 
-        let mountain_transform = model_transform.times(Mat4.scale(120,100,1)).times(Mat4.translation(0,.7,-218)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
+        let mountain_transform = model_transform.times(Mat4.scale(120,100,1)).times(Mat4.translation(0,.7,this.far_z_loc)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
         this.shapes.tri.draw(context, program_state, mountain_transform, this.materials.mountain);
         this.shapes.tri.draw(context, program_state, mountain_transform.times(Mat4.translation(0.6,-0.6,.1)), this.materials.mountain);
         this.shapes.tri.draw(context, program_state, mountain_transform.times(Mat4.translation(-0.6,0.6,-.1)), this.materials.mountain);
-        let mountain_tip_transform = model_transform.times(Mat4.scale(37,30,1)).times(Mat4.translation(0,2.33,-217)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
+        let mountain_tip_transform = model_transform.times(Mat4.scale(37,30,1)).times(Mat4.translation(0,2.33,this.far_z_loc+1)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
         this.shapes.tri.draw(context, program_state, mountain_tip_transform, this.materials.mountain_tip);
         this.shapes.tri.draw(context, program_state, mountain_tip_transform.times(Mat4.translation(1.94,-1.94,0)), this.materials.mountain_tip);
         this.shapes.tri.draw(context, program_state, mountain_tip_transform.times(Mat4.translation(-1.94,1.94,0)), this.materials.mountain_tip);
 
-        let sky_transform = model_transform.times(Mat4.scale(190,60,1)).times(Mat4.translation(0,1,-219));
+        let sky_transform = model_transform.times(Mat4.scale(190,60,1)).times(Mat4.translation(0,1,this.far_z_loc-.5));
         this.shapes.square.draw(context, program_state, sky_transform, this.materials.sky);
 
-        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(12,1,0)), this.materials.plastic);
-        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,1,0)), this.materials.plastic);
-        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(-12,1,0)), this.materials.plastic);
+        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,1,this.far_z_loc+218)), this.materials.plastic);
+        //this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(-12,1,0)), this.materials.plastic);
 
     }
 }
