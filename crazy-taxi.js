@@ -3,7 +3,7 @@ import {defs, tiny} from './examples/common.js';
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
-const {Triangle, Square, Tetrahedron, Windmill, Cube, Subdivision_Sphere} = defs;
+const {Triangle, Square, Tetrahedron, Windmill, Cube, Rounded_Capped_Cylinder, Subdivision_Sphere} = defs;
 
 class Base_Scene extends Scene {
     /**
@@ -19,6 +19,7 @@ class Base_Scene extends Scene {
             'cube': new Cube(),
             'tri': new Triangle(),
             'square': new Square(),
+            'r_cyl': new Rounded_Capped_Cylinder(25, 50),
         };
 
         // *** Materials
@@ -37,6 +38,21 @@ class Base_Scene extends Scene {
                 {ambient: 1, diffusivity: 1, specularity: 1, color: hex_color("#FFFFFF")}),
             sky: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: 0, specularity: 1, color: hex_color("#87CEEB")}),
+            // car materials
+            //------------------------------------------------------------------------
+            chassis: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, specularity: 1, color: hex_color("#FB9403")}),
+            wheel: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#121212")}),
+            window: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 1, color: hex_color("#888888")}),
+            taxisign: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, specularity: 1, color: hex_color("#FF3333")}),
+            headlight: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 1, color: hex_color("#EEEE88")}),
+            brakelight: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, specularity: 1, color: hex_color("#AA0000")}),
+            //------------------------------------------------------------------------
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -108,13 +124,13 @@ export class Crazy_Taxi extends Base_Scene {
         //----------------------------------------------------------------------------------------------------------------------------------------
         let road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945)).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, road_transform, this.materials.road);
-        
+
         let lane_divider_transform = model_transform.times(Mat4.scale(.25,1,2)).times(Mat4.translation(0,.1,0)).times(Mat4.rotation(Math.PI/2,1,0,0));
         for(let i = 0; i < 106; i+=5){
             this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i,0)), this.materials.lane_divider);
             this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i,0)), this.materials.lane_divider);
         }
-        
+
         let floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.97)).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, floor_transform, this.materials.sand);
 
@@ -131,8 +147,23 @@ export class Crazy_Taxi extends Base_Scene {
         this.shapes.square.draw(context, program_state, sky_transform, this.materials.sky);
 
         this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(12,1,0)), this.materials.plastic);
-        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,1,0)), this.materials.plastic);
+        // this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,1,0)), this.materials.plastic);
         this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(-12,1,0)), this.materials.plastic);
+
+        //Code to draw a car
+        //----------------------------------------------------------------------------------------------------------------------------------------
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-2,1,-3)).times(Mat4.rotation(Math.PI/2,0,1,0)), this.materials.wheel);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation( -2,1,3)).times(Mat4.rotation(Math.PI/2,0,1,0)), this.materials.wheel);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(2,1,-3)).times(Mat4.rotation(Math.PI/2,0,1,0)), this.materials.wheel);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation( 2,1,3)).times(Mat4.rotation(Math.PI/2,0,1,0)), this.materials.wheel);
+        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,2,0)).times(Mat4.scale(2.4,1,6)), this.materials.chassis);
+        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,4,0)).times(Mat4.scale(2.4,1,3)), this.materials.chassis);
+        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,5.5,0)).times(Mat4.scale(1,0.5,0.4)), this.materials.taxisign);
+        this.shapes.square.draw(context, program_state, model_transform.times(Mat4.translation(0,4,-3.1)).times(Mat4.scale(2.2,0.8,1)), this.materials.window);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(1.5,2.4,-5.6)).times(Mat4.scale(0.5,0.5,1)), this.materials.headlight);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-1.5,2.4,-5.6)).times(Mat4.scale(0.5,0.5,1)), this.materials.headlight);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(1.5,2.4,5.6)).times(Mat4.scale(0.7,0.2,1)), this.materials.brakelight);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-1.5,2.4,5.6)).times(Mat4.scale(0.7,0.2,1)), this.materials.brakelight);
 
     }
 }
