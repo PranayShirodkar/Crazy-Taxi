@@ -14,6 +14,7 @@ class Base_Scene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.move_forward = false;
+        this.move_back = false;
         this.cam_z_loc = -30;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -25,7 +26,7 @@ class Base_Scene extends Scene {
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, specularity: 1, color: hex_color("#ff0000")}),
+                {ambient: .4, diffusivity: 1, specularity: 1, color: hex_color("#ff0000")}),
             road: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#2A2A2A")}),
             lane_divider: new Material(new defs.Phong_Shader(),
@@ -57,15 +58,19 @@ class Base_Scene extends Scene {
         if(this.move_forward){
             this.cam_z_loc += 1;
         }
+        if(this.move_back){
+            this.cam_z_loc -= 1;
+        }
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 250);
 
         // *** Lights: *** Values of vector or point lights.
         //Changed light position
-        const light_position = vec4(0, -70, -5, 1);
+        //const light_position = vec4(0, -70, -10, 1);
+        const light_position = vec4(0, 10, -(this.cam_z_loc+30), 1);
         //Increased brightness
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**5)];
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**4)];
     }
 }
 
@@ -94,12 +99,20 @@ export class Crazy_Taxi extends Base_Scene {
         }, '#6E6460', () => {
             this.move_forward = false;
         });
-        this.key_triggered_button("Left", ["a"], this.move);
-        // Add a button for controlling the scene.
+        /*this.key_triggered_button("Backwards", ["s"], () => {
+            this.move_back = true;
+        }, '#6E6460', () => {
+            this.move_back = false;
+        });
+        this.key_triggered_button("Left", ["a"], () => {
+            //
+        });
         this.key_triggered_button("Right", ["d"], () => {
+            //
         });
-        this.key_triggered_button("Jump", ["spacebar"], () => {
-        });
+        this.key_triggered_button("Jump", ["space"], () => {
+            //
+        });*/
     }
 
     display(context, program_state) {
@@ -120,18 +133,30 @@ export class Crazy_Taxi extends Base_Scene {
         if(this.move_forward){
             this.far_z_loc -= 1;
         }
+        if(this.move_back){
+            this.far_z_loc += 1;
+        }
 
-        let road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945)).times(Mat4.rotation(Math.PI/2,1,0,0));
-        this.shapes.square.draw(context, program_state, road_transform, this.materials.road);
+        if(this.far_z_loc % 220 == 0 && this.far_z_loc != -220){
+            this.chunks += 1;
+        }
+        let current_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
+        let next_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*(this.chunks+1))).times(Mat4.rotation(Math.PI/2,1,0,0));
+        this.shapes.square.draw(context, program_state, current_road_transform, this.materials.road);
+        this.shapes.square.draw(context, program_state, next_road_transform, this.materials.road);
         
         let lane_divider_transform = model_transform.times(Mat4.scale(.25,1,2)).times(Mat4.translation(0,.1,0)).times(Mat4.rotation(Math.PI/2,1,0,0));
         for(let i = 0; i < 106; i+=5){
-            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i,0)), this.materials.lane_divider);
-            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i,0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i-(110*this.chunks),0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i-(110*this.chunks),0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i-(110*(this.chunks+1)),0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i-(110*(this.chunks+1)),0)), this.materials.lane_divider);
         }
         
-        let floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.97)).times(Mat4.rotation(Math.PI/2,1,0,0));
-        this.shapes.square.draw(context, program_state, floor_transform, this.materials.sand);
+        let current_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
+        let next_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*(this.chunks+1))).times(Mat4.rotation(Math.PI/2,1,0,0));
+        this.shapes.square.draw(context, program_state, current_floor_transform, this.materials.sand);
+        this.shapes.square.draw(context, program_state, next_floor_transform, this.materials.sand);
 
         let mountain_transform = model_transform.times(Mat4.scale(120,100,1)).times(Mat4.translation(0,.7,this.far_z_loc)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
         this.shapes.tri.draw(context, program_state, mountain_transform, this.materials.mountain);
