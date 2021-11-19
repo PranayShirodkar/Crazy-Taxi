@@ -14,8 +14,8 @@ class Base_Scene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.move_forward = false;
-        this.move_back = false;
         this.cam_z_loc = -30;
+        this.speedup_time = 0;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'cube': new Cube(),
@@ -54,13 +54,25 @@ class Base_Scene extends Scene {
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(Mat4.translation(0, -10, -30));
         }*/
+
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+
         program_state.set_camera(Mat4.translation(0, -10, this.cam_z_loc));
         if(this.move_forward){
-            this.cam_z_loc += 1;
-        }
-        if(this.move_back){
-            this.cam_z_loc -= 1;
-        }
+            if(this.speedup_time < 3.0){
+                this.speedup_time += dt;
+            }else{
+                this.speedup_time = 3;
+            }
+            this.cam_z_loc += Math.min(2,.5+.5*this.speedup_time);
+        }/*else{
+            if(this.speedup_time > 0){
+                this.speedup_time -= dt;
+            }else{
+                this.speedup_time = 0;
+            }
+            this.cam_z_loc += Math.max(.5,.5-(3/20)*this.speedup_time);
+        }*/
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 250);
@@ -84,7 +96,7 @@ export class Crazy_Taxi extends Base_Scene {
 
     constructor(){
         super();
-        this.far_z_loc = -218;
+        this.far_z_loc = -216;
         this.chunks = 0;
     }
 
@@ -121,6 +133,7 @@ export class Crazy_Taxi extends Base_Scene {
         const yellow = hex_color("#ffe910");
         const gray = hex_color("#a0a0a0");
         let model_transform = Mat4.identity();
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         // Example for drawing a cube, you can remove this line if needed
         //this.shapes.tri.draw(context, program_state, model_transform.times(Mat4.translation(0,2,-2)), this.materials.plastic.override({color:gray}));
@@ -131,15 +144,18 @@ export class Crazy_Taxi extends Base_Scene {
         //----------------------------------------------------------------------------------------------------------------------------------------
 
         if(this.move_forward){
-            this.far_z_loc -= 1;
-        }
-        if(this.move_back){
-            this.far_z_loc += 1;
-        }
+            this.far_z_loc -= Math.min(2,.5+.5*this.speedup_time);
+        }/*else{
+            this.far_z_loc -= Math.max(.5,.5-(3/20)*this.speedup_time);
+        }*/
 
-        if(this.far_z_loc % 220 == 0 && this.far_z_loc != -220){
+        /*if(this.far_z_loc % 220 == 0 && this.far_z_loc != -220){
+            this.chunks += 1;
+        }*/
+        if(this.far_z_loc < -220*(this.chunks+2) && this.far_z_loc > -220*(this.chunks+3)){
             this.chunks += 1;
         }
+
         let current_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
         let next_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*(this.chunks+1))).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, current_road_transform, this.materials.road);
