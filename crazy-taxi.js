@@ -120,6 +120,39 @@ export class Crazy_Taxi extends Base_Scene {
         this.chunks = 0;
         this.taxi_target_x_pos = 0;
         this.taxi_current_x_transform = Mat4.identity();
+        this.traffic_speed = -0.4;
+        this.cars_transform = [];
+        this.cars_color = [];
+        this.traffic_patterns = [
+        // [car in lane 1, car in lane 2, car in lane 3]
+            [false, false, false],
+            [true, false, false],
+            [false, true, false],
+            [false, false, true],
+            [true, true, false],
+            [false, true, true],
+            [true, false, true],
+            [true, true, true]];
+
+        this.init_traffic();
+    }
+
+    init_traffic() {
+        let initial_traffic_layers = 4;
+        // select a traffic pattern randomly and insert cars into cars array
+        for (let i = 0; i < initial_traffic_layers; i++) {
+            let random_traffic_pattern = this.traffic_patterns[Math.floor(Math.random() * this.traffic_patterns.length)];
+            for (let j = 0; j < random_traffic_pattern.length; j++) {
+                if (random_traffic_pattern[j]) {
+                    this.cars_transform.push(Mat4.translation(13 * (j - 1), 0, -50 + (-50 * i)))
+                }
+            }
+        }
+
+        // randomly select colors for every car
+        for (let i = 0; i < this.cars_transform.length; i++) {
+            this.cars_color.push(color((Math.random() * (0.8) + 0.2), (Math.random() * (0.8) + 0.2), (Math.random() * (0.8) + 0.2), 1));
+        }
     }
 
     update_traffic() {
@@ -236,6 +269,12 @@ export class Crazy_Taxi extends Base_Scene {
         let model_transform = this.taxi_current_x_transform.times(Mat4.translation(0, 0, this.far_z_loc + 218));
         //draw taxi
         this.draw_car(context, program_state, true, model_transform);
+
+        //move cars at constant speed and draw them
+        for (let i = 0; i < this.cars_transform.length; i++) {
+            this.cars_transform[i] = this.cars_transform[i].times(Mat4.translation(0, 0, this.traffic_speed));
+            this.draw_car(context, program_state, false, this.cars_transform[i], this.cars_color[i]);
+        }
     }
 
     draw_car(context, program_state, taxi, model_transform, color = this.taxi_yellow) {
