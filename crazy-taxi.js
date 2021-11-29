@@ -1,4 +1,5 @@
 import {defs, tiny} from './examples/common.js';
+import {Shape_From_File} from './examples/obj-file-demo.js'
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -91,6 +92,7 @@ export class Crazy_Taxi extends Base_Scene {
     constructor(){
         super();
         this.move_forward = false;
+        this.pos = 0;
     }
 
     move() {
@@ -100,9 +102,17 @@ export class Crazy_Taxi extends Base_Scene {
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Forward", ["w"], () => {this.move_forward = true});
-        this.key_triggered_button("Left", ["a"], this.move);
-        // Add a button for controlling the scene.
+        this.key_triggered_button("Left", ["a"], () => {
+            this.pos -= 13;
+            if (this.pos < -13) {
+                this.pos = -13;
+            }
+        });
         this.key_triggered_button("Right", ["d"], () => {
+            this.pos += 13;
+            if (this.pos > 13) {
+                this.pos = 13;
+            }
         });
         this.key_triggered_button("Jump", ["spacebar"], () => {
         });
@@ -152,18 +162,27 @@ export class Crazy_Taxi extends Base_Scene {
 
         //Code to draw a car
         //----------------------------------------------------------------------------------------------------------------------------------------
-        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-2,1,-3)).times(Mat4.rotation(Math.PI/2,0,1,0)), this.materials.wheel);
-        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation( -2,1,3)).times(Mat4.rotation(Math.PI/2,0,1,0)), this.materials.wheel);
-        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(2,1,-3)).times(Mat4.rotation(Math.PI/2,0,1,0)), this.materials.wheel);
-        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation( 2,1,3)).times(Mat4.rotation(Math.PI/2,0,1,0)), this.materials.wheel);
-        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,2,0)).times(Mat4.scale(2.4,1,6)), this.materials.chassis);
-        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,4,0)).times(Mat4.scale(2.4,1,3)), this.materials.chassis);
-        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,5.5,0)).times(Mat4.scale(1,0.5,0.4)), this.materials.taxisign);
-        this.shapes.square.draw(context, program_state, model_transform.times(Mat4.translation(0,4,-3.1)).times(Mat4.scale(2.2,0.8,1)), this.materials.window);
-        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(1.5,2.4,-5.6)).times(Mat4.scale(0.5,0.5,1)), this.materials.headlight);
-        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-1.5,2.4,-5.6)).times(Mat4.scale(0.5,0.5,1)), this.materials.headlight);
-        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(1.5,2.4,5.6)).times(Mat4.scale(0.7,0.2,1)), this.materials.brakelight);
-        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-1.5,2.4,5.6)).times(Mat4.scale(0.7,0.2,1)), this.materials.brakelight);
+        this.draw_taxi(context, program_state);
 
+    }
+
+    draw_taxi(context, program_state) {
+        let move_transform = Mat4.identity();
+        move_transform = move_transform.times(Mat4.translation(this.pos, 0, 0));
+        // console.log(this.pos);
+
+        let model_transform = Mat4.identity();
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-2, 1, -3)).times(move_transform).times(Mat4.rotation(Math.PI / 2, 0, 1, 0)), this.materials.wheel);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-2, 1, 3)).times(move_transform).times(Mat4.rotation(Math.PI / 2, 0, 1, 0)), this.materials.wheel);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(2, 1, -3)).times(move_transform).times(Mat4.rotation(Math.PI / 2, 0, 1, 0)), this.materials.wheel);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(2, 1, 3)).times(move_transform).times(Mat4.rotation(Math.PI / 2, 0, 1, 0)), this.materials.wheel);
+        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0, 2, 0)).times(move_transform).times(Mat4.scale(2.4, 1, 6)), this.materials.chassis);
+        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0, 4, 0)).times(move_transform).times(Mat4.scale(2.4, 1, 3)), this.materials.chassis);
+        this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0, 5.5, 0)).times(move_transform).times(Mat4.scale(1, 0.5, 0.4)), this.materials.taxisign);
+        this.shapes.square.draw(context, program_state, model_transform.times(Mat4.translation(0, 4, -3.1)).times(move_transform).times(Mat4.scale(2.2, 0.8, 1)), this.materials.window);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(1.5, 2.4, -5.6)).times(move_transform).times(Mat4.scale(0.5, 0.5, 1)), this.materials.headlight);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-1.5, 2.4, -5.6)).times(move_transform).times(Mat4.scale(0.5, 0.5, 1)), this.materials.headlight);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(1.5, 2.4, 5.6)).times(move_transform).times(Mat4.scale(0.7, 0.2, 1)), this.materials.brakelight);
+        this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-1.5, 2.4, 5.6)).times(move_transform).times(Mat4.scale(0.7, 0.2, 1)), this.materials.brakelight);
     }
 }
