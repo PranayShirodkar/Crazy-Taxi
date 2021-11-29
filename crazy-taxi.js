@@ -262,7 +262,7 @@ export class Crazy_Taxi extends Base_Scene {
         //----------------------------------------------------------------------------------------------------------------------------------------
         this.update_traffic();
         this.move_and_draw_cars(context, program_state);
-        // this.detect_collision();
+        this.detect_collision();
 
     }
 
@@ -309,6 +309,20 @@ export class Crazy_Taxi extends Base_Scene {
             this.shapes.square.draw(context, program_state, model_transform.times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.translation(0, 2.3, 2.41)).times(Mat4.scale(6, 0.2, 1)), this.materials.blackpaint);
             this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.translation(0, 2.3, 2.41)).times(Mat4.scale(2.5, 0.7, 0.02)), this.materials.blackpaint);
             this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.rotation(-Math.PI / 2, 0, 1, 0)).times(Mat4.translation(0, 2.3, 2.41)).times(Mat4.scale(2.5, 0.7, 0.02)), this.materials.blackpaint);
+        }
+    }
+
+    detect_collision() {
+        let taxi_z_pos = this.taxi_transform[2][3];
+        let taxi_x_pos = this.taxi_target_x_pos;
+        for (let i = 0; i < this.cars_transform.length; i++) {
+            let car_z_pos = this.cars_transform[i][2][3];
+            let car_x_pos = this.cars_transform[i][0][3];
+            let collision_detected = false;
+            if ((taxi_z_pos > car_z_pos) && (taxi_z_pos - car_z_pos < 12.3) && (Math.abs(taxi_x_pos - car_x_pos) < 4.8)) {collision_detected = true;}
+            if (collision_detected) {
+                this.cars_color[i] = hex_color("#FF0000");
+            }
         }
     }
 }
