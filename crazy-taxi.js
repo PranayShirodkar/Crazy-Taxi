@@ -15,8 +15,11 @@ class Base_Scene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.move_forward = false;
+        this.slowdown = false;
         this.cam_z_loc = -30;
         this.speedup_time = 0;
+        this.slowdown_time = 0;
+        this.speed = 0;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'cube': new Cube(),
@@ -83,18 +86,32 @@ class Base_Scene extends Scene {
         if(this.move_forward){
             if(this.speedup_time < 3.0){
                 this.speedup_time += dt;
+                this.slowdown_time = 2*this.speedup_time;
             }else{
                 this.speedup_time = 3;
+                this.slowdown_time = 6;
             }
-            this.cam_z_loc += Math.min(2,.5+.5*this.speedup_time);
-        }/*else{
+            this.speed = Math.min(2,.5+.5*this.speedup_time);
+        }else if(this.slowdown){
             if(this.speedup_time > 0){
                 this.speedup_time -= dt;
+                this.slowdown_time = 2*this.speedup_time;
             }else{
                 this.speedup_time = 0;
+                this.slowdown_time = 0;
             }
-            this.cam_z_loc += Math.max(.5,.5-(3/20)*this.speedup_time);
-        }*/
+            this.speed = Math.max(.5,.5+.5*this.speedup_time);
+        }else{
+            if(this.slowdown_time > 0){
+                this.slowdown_time -= dt;
+                this.speedup_time = .5*this.slowdown_time;
+            }else{
+                this.slowdown_time = 0;
+                this.speedup_time = 0;
+            }
+            this.speed = (this.speed == 0) ? 0 : Math.max(.5, .5+.25*this.slowdown_time);
+        }
+        this.cam_z_loc += this.speed;
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 250);
@@ -118,9 +135,12 @@ export class Crazy_Taxi extends Base_Scene {
 
     constructor(){
         super();
+        this.jump = false;
+        this.jump_time = 0;
         this.far_z_loc = -216;
         this.chunks = 0;
         this.taxi_target_x_pos = 0;
+        this.taxi_target_y_pos = 0;
         this.taxi_current_x_transform = Mat4.identity();
         this.taxi_transform = Mat4.identity();
         this.traffic_speed = -0.4;
@@ -174,31 +194,31 @@ export class Crazy_Taxi extends Base_Scene {
             this.move_forward = false;
         });
         this.key_triggered_button("Left", ["a"], () => {
-            this.taxi_target_x_pos -= 13;
-            if (this.taxi_target_x_pos < -13) {
-                this.taxi_target_x_pos = -13;
+            if(!this.jump){
+                this.taxi_target_x_pos -= 13;
+                if (this.taxi_target_x_pos < -13) {
+                    this.taxi_target_x_pos = -13;
+                }
             }
         });
         this.key_triggered_button("Right", ["d"], () => {
-            this.taxi_target_x_pos += 13;
-            if (this.taxi_target_x_pos > 13) {
-                this.taxi_target_x_pos = 13;
+            if(!this.jump){
+                this.taxi_target_x_pos += 13;
+                if (this.taxi_target_x_pos > 13) {
+                    this.taxi_target_x_pos = 13;
+                }
             }
         });
-        /*this.key_triggered_button("Backwards", ["s"], () => {
-            this.move_back = true;
+        this.key_triggered_button("Slowdown", ["s"], () => {
+            this.slowdown = true;
         }, '#6E6460', () => {
-            this.move_back = false;
+            this.slowdown = false;
         });
-        this.key_triggered_button("Left", ["a"], () => {
-            //
+        this.key_triggered_button("Jump", [" "], () => {
+            if(this.taxi_target_y_pos == 0 && !this.jump){
+                this.jump = true;
+            }
         });
-        this.key_triggered_button("Right", ["d"], () => {
-            //
-        });
-        this.key_triggered_button("Jump", ["space"], () => {
-            //
-        });*/
     }
 
     display(context, program_state) {
@@ -212,11 +232,14 @@ export class Crazy_Taxi extends Base_Scene {
         //Code to draw background
         //----------------------------------------------------------------------------------------------------------------------------------------
 
-        if(this.move_forward){
-            this.far_z_loc -= Math.min(2,.5+.5*this.speedup_time);
-        }/*else{
-            this.far_z_loc -= Math.max(.5,.5-(3/20)*this.speedup_time);
+        /*if(this.move_forward){
+            this.far_z_loc -= this.speed;
+        }else if(this.slowdown){
+            this.far_z_loc -= this.speed
+        }else{
+            this.far_z_loc -= this.speed;
         }*/
+        this.far_z_loc -= this.speed;
 
         /*if(this.far_z_loc % 220 == 0 && this.far_z_loc != -220){
             this.chunks += 1;
@@ -267,8 +290,13 @@ export class Crazy_Taxi extends Base_Scene {
     }
 
     move_and_draw_cars(context, program_state) {
+        if(this.jump){
+            this.jump_time += program_state.animation_delta_time / 1000;
+            this.taxi_target_y_pos = (this.taxi_target_y_pos >= 0) ? -160*(this.jump_time**2 - .5*this.jump_time) : 0;
+            if(this.taxi_target_y_pos == 0) this.jump = false;
+        }else{ this.jump_time = 0; }
         //move taxi
-        let target_x_transform = Mat4.translation(this.taxi_target_x_pos, 0, 0);
+        let target_x_transform = Mat4.translation(this.taxi_target_x_pos, this.taxi_target_y_pos, 0);
         this.taxi_current_x_transform = target_x_transform.map((x, i) => Vector.from(this.taxi_current_x_transform[i]).mix(x, 0.2));
         this.taxi_transform = this.taxi_current_x_transform.times(Mat4.translation(0, 0, this.far_z_loc + 218));
         //draw taxi
