@@ -117,9 +117,11 @@ class Base_Scene extends Scene {
             }
         }
         else if (this.collision_detected) {
+            if (!this.collision_handling) {
+                this.speed = (-0.75 * this.speed);
+            }
             this.collision_handling = true;
             this.collision_detected = false;
-            this.speed = (-0.75 * this.speed);
             this.speedup_time = 0;
             this.slowdown_time = 0;
         }
