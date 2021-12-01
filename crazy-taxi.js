@@ -19,6 +19,8 @@ class Base_Scene extends Scene {
         this.cam_z_loc = -30;
         this.speedup_time = 0;
         this.slowdown_time = 0;
+        this.collision_detected = false;
+        this.collision_handling = false;
         this.speed = 0;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -84,34 +86,51 @@ class Base_Scene extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         program_state.set_camera(Mat4.translation(0, -10, this.cam_z_loc));
-        if(this.move_forward){
-            if(this.speedup_time < 3.0){
-                this.speedup_time += dt;
-                this.slowdown_time = 2*this.speedup_time;
-            }else{
-                this.speedup_time = 3;
-                this.slowdown_time = 6;
+        if(!this.collision_detected && !this.collision_handling) {
+            if (this.move_forward) {
+                if (this.speedup_time < 3.0) {
+                    this.speedup_time += dt;
+                    this.slowdown_time = 2 * this.speedup_time;
+                } else {
+                    this.speedup_time = 3;
+                    this.slowdown_time = 6;
+                }
+                this.speed = Math.min(2, .5 + .5 * this.speedup_time);
+            } else if (this.slowdown) {
+                if (this.speedup_time > 0) {
+                    this.speedup_time -= dt;
+                    this.slowdown_time = 2 * this.speedup_time;
+                } else {
+                    this.speedup_time = 0;
+                    this.slowdown_time = 0;
+                }
+                this.speed = Math.max(.5, .5 + .5 * this.speedup_time);
+            } else {
+                if (this.slowdown_time > 0) {
+                    this.slowdown_time -= dt;
+                    this.speedup_time = .5 * this.slowdown_time;
+                } else {
+                    this.slowdown_time = 0;
+                    this.speedup_time = 0;
+                }
+                this.speed = (this.speed == 0) ? 0 : Math.max(.5, .5 + .25 * this.slowdown_time);
             }
-            this.speed = Math.min(2,.5+.5*this.speedup_time);
-        }else if(this.slowdown){
-            if(this.speedup_time > 0){
-                this.speedup_time -= dt;
-                this.slowdown_time = 2*this.speedup_time;
-            }else{
-                this.speedup_time = 0;
-                this.slowdown_time = 0;
-            }
-            this.speed = Math.max(.5,.5+.5*this.speedup_time);
-        }else{
-            if(this.slowdown_time > 0){
-                this.slowdown_time -= dt;
-                this.speedup_time = .5*this.slowdown_time;
-            }else{
-                this.slowdown_time = 0;
-                this.speedup_time = 0;
-            }
-            this.speed = (this.speed == 0) ? 0 : Math.max(.5, .5+.25*this.slowdown_time);
         }
+        else if (this.collision_detected) {
+            this.collision_handling = true;
+            this.collision_detected = false;
+            this.speed = (-0.75 * this.speed);
+            this.speedup_time = 0;
+            this.slowdown_time = 0;
+        }
+        else if (this.collision_handling) {
+            this.speed += dt*2;
+            if (this.speed >= 0.5) {
+                this.speed = 0.5
+                this.collision_handling = false;
+            }
+        }
+
         this.cam_z_loc += this.speed;
 
         program_state.projection_transform = Mat4.perspective(
@@ -315,7 +334,7 @@ export class Crazy_Taxi extends Base_Scene {
 
         //Code to draw a car
         //----------------------------------------------------------------------------------------------------------------------------------------
-        this.update_objects(context, program_state)
+        this.update_objects(context, program_state);
         this.draw_objects(context, program_state);
         this.detect_collision(context, program_state);
 
@@ -328,8 +347,6 @@ export class Crazy_Taxi extends Base_Scene {
             this.taxi_target_y_pos = (this.taxi_target_y_pos >= 0) ? -160*(this.jump_time**2 - .5*this.jump_time) : 0;
             if(this.taxi_target_y_pos == 0) this.jump = false;
         }else{ this.jump_time = 0; }
-
-        // handle collision
 
         // interpolate taxi transform
         let target_xy_transform = Mat4.translation(this.taxi_target_x_pos, this.taxi_target_y_pos, 0);
@@ -400,7 +417,7 @@ export class Crazy_Taxi extends Base_Scene {
             if ((taxi_z_pos > car_z_pos) &&
                 (taxi_z_pos - car_z_pos < 12.3) &&
                 (taxi_y_pos - car_y_pos < 3) &&
-                (Math.abs(taxi_x_pos - car_x_pos) < 4.8)) {collision_detected = true;}
+                (Math.abs(taxi_x_pos - car_x_pos) < 4.8)) {collision_detected = true;this.collision_detected = true;}
             if (collision_detected) {
                 this.cars_color[i] = hex_color("#FF0000");
             }
