@@ -27,6 +27,7 @@ class Base_Scene extends Scene {
             'square': new Square(),
             'r_cyl': new Rounded_Capped_Cylinder(25, 50),
         };
+        this.taxi_transform = Mat4.identity();
         this.taxi_color = hex_color("#FB9403");
 
         // *** Materials
@@ -142,12 +143,11 @@ export class Crazy_Taxi extends Base_Scene {
         this.taxi_target_x_pos = 0;
         this.taxi_target_y_pos = 0;
         this.taxi_interpolated_xy_transform = Mat4.identity();
-        this.taxi_transform = Mat4.identity();
         this.lane_spacing = 13;
         this.traffic_speed = -6;
         this.traffic_layers = 4; // the constant numbers of traffic layers always maintained on road
         this.traffic_layer_count = 0; // count of total traffic layers so far
-        this.traffic_layer_spacing = -50;
+        this.traffic_layer_spacing = -60;
         this.cars_init_transform = [];
         this.cars_transform = [];
         this.cars_color = [];
@@ -322,14 +322,16 @@ export class Crazy_Taxi extends Base_Scene {
     }
 
     update_objects(context, program_state) {
-        // move taxi
+        // handle taxi jump
         if(this.jump){
             this.jump_time += program_state.animation_delta_time / 1000;
             this.taxi_target_y_pos = (this.taxi_target_y_pos >= 0) ? -160*(this.jump_time**2 - .5*this.jump_time) : 0;
             if(this.taxi_target_y_pos == 0) this.jump = false;
         }else{ this.jump_time = 0; }
 
+        // handle collision
 
+        // interpolate taxi transform
         let target_xy_transform = Mat4.translation(this.taxi_target_x_pos, this.taxi_target_y_pos, 0);
         this.taxi_interpolated_xy_transform = target_xy_transform.map((x, i) => Vector.from(this.taxi_interpolated_xy_transform[i]).mix(x, 0.2));
 
@@ -387,13 +389,18 @@ export class Crazy_Taxi extends Base_Scene {
     }
 
     detect_collision(context, program_state) {
-        let taxi_z_pos = this.taxi_transform[2][3];
         let taxi_x_pos = this.taxi_target_x_pos;
+        let taxi_y_pos = this.taxi_transform[1][3];
+        let taxi_z_pos = this.taxi_transform[2][3];
         for (let i = 0; i < this.cars_transform.length; i++) {
-            let car_z_pos = this.cars_transform[i][2][3];
             let car_x_pos = this.cars_transform[i][0][3];
+            let car_y_pos = this.cars_transform[i][1][3];
+            let car_z_pos = this.cars_transform[i][2][3];
             let collision_detected = false;
-            if ((taxi_z_pos > car_z_pos) && (taxi_z_pos - car_z_pos < 12.3) && (Math.abs(taxi_x_pos - car_x_pos) < 4.8)) {collision_detected = true;}
+            if ((taxi_z_pos > car_z_pos) &&
+                (taxi_z_pos - car_z_pos < 12.3) &&
+                (taxi_y_pos - car_y_pos < 3) &&
+                (Math.abs(taxi_x_pos - car_x_pos) < 4.8)) {collision_detected = true;}
             if (collision_detected) {
                 this.cars_color[i] = hex_color("#FF0000");
             }
