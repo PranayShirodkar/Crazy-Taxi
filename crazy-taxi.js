@@ -104,7 +104,7 @@ class Base_Scene extends Scene {
                     this.speedup_time = 0;
                     this.slowdown_time = 0;
                 }
-                this.speed = Math.max(.5, .5 + .5 * this.speedup_time);
+                this.speed = (this.cam_z_loc != -30) ? Math.max(.5, .5 + .5 * this.speedup_time) : 0;
             } else {
                 if (this.slowdown_time > 0) {
                     this.slowdown_time -= dt;
