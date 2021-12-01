@@ -326,8 +326,11 @@ export class Crazy_Taxi extends Base_Scene {
         if(this.jump){
             this.jump_time += program_state.animation_delta_time / 1000;
             this.taxi_target_y_pos = (this.taxi_target_y_pos >= 0) ? -160*(this.jump_time**2 - .5*this.jump_time) : 0;
-            if(this.taxi_target_y_pos == 0) this.jump = false;
-        }else{ this.jump_time = 0; }
+            if(this.taxi_target_y_pos == 0){
+                this.jump = false;
+                this.jump_time = 0;
+            }
+        }
 
         // handle collision
 
