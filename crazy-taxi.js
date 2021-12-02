@@ -1,5 +1,10 @@
 import {defs, tiny} from './examples/common.js';
+
+import {Skull} from './skull.js'
+import {Cactus} from './cactus.js'
+
 import {Shape_From_File} from './examples/obj-file-demo.js'
+
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -28,6 +33,8 @@ class Base_Scene extends Scene {
             'tri': new Triangle(),
             'square': new Square(),
             'r_cyl': new Rounded_Capped_Cylinder(25, 50),
+            'skull': new Skull(),
+            'cactus': new Cactus(),
         };
         this.taxi_transform = Mat4.identity();
         this.taxi_color = hex_color("#FB9403");
@@ -66,6 +73,10 @@ class Base_Scene extends Scene {
                 {ambient: .4, diffusivity: .6, specularity: 1, color: hex_color("#AA0000")}),
             blackpaint: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: 1, specularity: 1, color: hex_color("#000000")}),
+            skull: new Material(new defs.Phong_Shader(),
+                {ambient: .5, diffusivity: .3, specularity: .5, color: hex_color("#ffffff")}),
+            cactus: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .1, specularity: .1, color: hex_color("#29910f")}),
             //------------------------------------------------------------------------
         };
         // The white material and basic shader are used for drawing the outline.
@@ -279,6 +290,7 @@ export class Crazy_Taxi extends Base_Scene {
         const blue = hex_color("#1a9ffa");
         const yellow = hex_color("#ffe910");
         const gray = hex_color("#a0a0a0");
+        const white = hex_color("#ffffff");
         let model_transform = Mat4.identity();
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
