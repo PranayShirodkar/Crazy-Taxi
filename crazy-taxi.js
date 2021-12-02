@@ -303,8 +303,10 @@ export class Crazy_Taxi extends Base_Scene {
 
         let current_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
         let next_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*(this.chunks+1))).times(Mat4.rotation(Math.PI/2,1,0,0));
+        let prev_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*(this.chunks-1))).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, current_road_transform, this.materials.road);
         this.shapes.square.draw(context, program_state, next_road_transform, this.materials.road);
+        this.shapes.square.draw(context, program_state, prev_road_transform, this.materials.road);
         
         let lane_divider_transform = model_transform.times(Mat4.scale(.25,1,2)).times(Mat4.translation(0,.1,0)).times(Mat4.rotation(Math.PI/2,1,0,0));
         for(let i = 0; i < 106; i+=5){
@@ -312,12 +314,16 @@ export class Crazy_Taxi extends Base_Scene {
             this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i-(110*this.chunks),0)), this.materials.lane_divider);
             this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i-(110*(this.chunks+1)),0)), this.materials.lane_divider);
             this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i-(110*(this.chunks+1)),0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i-(110*(this.chunks-1)),0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i-(110*(this.chunks-1)),0)), this.materials.lane_divider);
         }
         
         let current_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
         let next_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*(this.chunks+1))).times(Mat4.rotation(Math.PI/2,1,0,0));
+        let prev_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*(this.chunks-1))).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, current_floor_transform, this.materials.sand);
         this.shapes.square.draw(context, program_state, next_floor_transform, this.materials.sand);
+        this.shapes.square.draw(context, program_state, prev_floor_transform, this.materials.sand);
 
         let mountain_transform = model_transform.times(Mat4.scale(120,100,1)).times(Mat4.translation(0,.7,this.far_z_loc)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
         this.shapes.tri.draw(context, program_state, mountain_transform, this.materials.mountain);
