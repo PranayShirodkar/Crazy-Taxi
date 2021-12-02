@@ -15,8 +15,13 @@ class Base_Scene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.move_forward = false;
+        this.slowdown = false;
         this.cam_z_loc = -30;
         this.speedup_time = 0;
+        this.slowdown_time = 0;
+        this.collision_detected = false;
+        this.collision_handling = false;
+        this.speed = 0;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'cube': new Cube(),
@@ -24,6 +29,7 @@ class Base_Scene extends Scene {
             'square': new Square(),
             'r_cyl': new Rounded_Capped_Cylinder(25, 50),
         };
+        this.taxi_transform = Mat4.identity();
         this.taxi_color = hex_color("#FB9403");
 
         // *** Materials
@@ -80,21 +86,54 @@ class Base_Scene extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         program_state.set_camera(Mat4.translation(0, -10, this.cam_z_loc));
-        if(this.move_forward){
-            if(this.speedup_time < 3.0){
-                this.speedup_time += dt;
-            }else{
-                this.speedup_time = 3;
+        if(!this.collision_detected && !this.collision_handling) {
+            if (this.move_forward) {
+                if (this.speedup_time < 3.0) {
+                    this.speedup_time += dt;
+                    this.slowdown_time = 2 * this.speedup_time;
+                } else {
+                    this.speedup_time = 3;
+                    this.slowdown_time = 6;
+                }
+                this.speed = Math.min(2, .5 + .5 * this.speedup_time);
+            } else if (this.slowdown) {
+                if (this.speedup_time > 0) {
+                    this.speedup_time -= dt;
+                    this.slowdown_time = 2 * this.speedup_time;
+                } else {
+                    this.speedup_time = 0;
+                    this.slowdown_time = 0;
+                }
+                this.speed = (this.cam_z_loc != -30) ? Math.max(.5, .5 + .5 * this.speedup_time) : 0;
+            } else {
+                if (this.slowdown_time > 0) {
+                    this.slowdown_time -= dt;
+                    this.speedup_time = .5 * this.slowdown_time;
+                } else {
+                    this.slowdown_time = 0;
+                    this.speedup_time = 0;
+                }
+                this.speed = (this.speed == 0) ? 0 : Math.max(.5, .5 + .25 * this.slowdown_time);
             }
-            this.cam_z_loc += Math.min(2,.5+.5*this.speedup_time);
-        }/*else{
-            if(this.speedup_time > 0){
-                this.speedup_time -= dt;
-            }else{
-                this.speedup_time = 0;
+        }
+        else if (this.collision_detected) {
+            if (!this.collision_handling) {
+                this.speed = (-0.75 * this.speed);
             }
-            this.cam_z_loc += Math.max(.5,.5-(3/20)*this.speedup_time);
-        }*/
+            this.collision_handling = true;
+            this.collision_detected = false;
+            this.speedup_time = 0;
+            this.slowdown_time = 0;
+        }
+        else if (this.collision_handling) {
+            this.speed += dt*2;
+            if (this.speed >= 0.5) {
+                this.speed = 0.5
+                this.collision_handling = false;
+            }
+        }
+
+        this.cam_z_loc += this.speed;
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 250);
@@ -118,15 +157,22 @@ export class Crazy_Taxi extends Base_Scene {
 
     constructor(){
         super();
+        this.jump = false;
+        this.jump_time = 0;
         this.far_z_loc = -216;
         this.chunks = 0;
         this.taxi_target_x_pos = 0;
-        this.taxi_current_x_transform = Mat4.identity();
-        this.taxi_transform = Mat4.identity();
-        this.traffic_speed = -0.4;
+        this.taxi_target_y_pos = 0;
+        this.taxi_interpolated_xy_transform = Mat4.identity();
+        this.lane_spacing = 13;
+        this.traffic_speed = -40;
+        this.traffic_layers = 4; // the constant numbers of traffic layers always maintained on road
+        this.traffic_layer_count = 0; // count of total traffic layers so far
+        this.traffic_layer_spacing = -60;
+        this.cars_init_transform = [];
         this.cars_transform = [];
         this.cars_color = [];
-        this.traffic_patterns = [
+        this.traffic_layer_patterns = [
         // [car in lane 1, car in lane 2, car in lane 3]
             [false, false, false],
             [true, false, false],
@@ -137,33 +183,62 @@ export class Crazy_Taxi extends Base_Scene {
             [true, false, true],
             [true, true, true]];
 
+
         this.init_traffic();
     }
 
     init_traffic() {
-        let initial_traffic_layers = 4;
-        // select a traffic pattern randomly and insert cars into cars array
-        for (let i = 0; i < initial_traffic_layers; i++) {
-            let random_traffic_pattern = this.traffic_patterns[Math.floor(Math.random() * this.traffic_patterns.length)];
-            for (let j = 0; j < random_traffic_pattern.length; j++) {
-                if (random_traffic_pattern[j]) {
-                    this.cars_transform.push(Mat4.translation(13 * (j - 1), 0, -50 + (-50 * i)))
-                }
+        for (let i = 0; i < this.traffic_layers; i++) {
+            this.insert_traffic_layer();
+        }
+    }
+
+    insert_traffic_layer() {
+        // select a traffic pattern randomly and insert cars into cars init array
+        this.traffic_layer_count++;
+        let random_traffic_pattern = this.traffic_layer_patterns[Math.floor(Math.random() * this.traffic_layer_patterns.length)];
+        for (let i = 0; i < random_traffic_pattern.length; i++) {
+            if (random_traffic_pattern[i]) {
+                let x_pos = this.lane_spacing * (i - 1);
+                let z_pos = this.traffic_layer_spacing * this.traffic_layer_count
+                this.cars_init_transform.push(Mat4.translation(x_pos, 0, z_pos));
+                this.cars_color.push(color((Math.random() * (0.8) + 0.2), (Math.random() * (0.8) + 0.2), (Math.random() * (0.8) + 0.2), 1));
             }
         }
+    }
 
-        // randomly select colors for every car
-        for (let i = 0; i < this.cars_transform.length; i++) {
-            this.cars_color.push(color((Math.random() * (0.8) + 0.2), (Math.random() * (0.8) + 0.2), (Math.random() * (0.8) + 0.2), 1));
+    update_traffic(context, program_state) {
+        // make updates to this.cars_init_transform array and recalculate this.cars_transform array at the end
+        this.cars_transform = []
+        const t = program_state.animation_time / 1000;
+
+        // determine the index of the cars that have been passed by
+        let cars_to_remove = []
+        let taxi_z_pos = this.taxi_transform[2][3];
+        for (let i = 0; i < this.cars_init_transform.length; i++) {
+            let car_z_pos = this.cars_init_transform[i][2][3] + (t * this.traffic_speed);
+            if (car_z_pos - taxi_z_pos > 15) {cars_to_remove.push(i);}
         }
-    }
 
-    update_traffic() {
-        // TBD, remove cars behind taxi, add new cars ahead of taxi, assign random color to new cars
-    }
+        // remove cars that have been passed by, starting with the largest to the smallest index
+        // if we remove the smallest index first, all the remaining larger indices get changed, subsequent removals become wrong
+        for (let i = cars_to_remove.length - 1; i >= 0; i--) {
+            this.cars_init_transform.splice(cars_to_remove[i], 1)
+            this.cars_color.splice(cars_to_remove[i], 1)
+        }
 
-    move() {
+        // if we have passed a traffic layer, insert new layer of traffic
+        // do not just use car_z_pos here because some layers have no cars, but we should still insert a new layer
+        let nearest_layer_z_pos = (this.traffic_layer_spacing * (this.traffic_layer_count - this.traffic_layers + 1)) + (t * this.traffic_speed);
+        if (nearest_layer_z_pos > taxi_z_pos) {
+            this.insert_traffic_layer();
+        }
 
+        // calculate this.cars_transform array from this.cars_init_transform array
+        for (let i = 0; i < this.cars_init_transform.length; i++) {
+            let car_transform = this.cars_init_transform[i].times(Mat4.translation(0, 0, t * this.traffic_speed))
+            this.cars_transform.push(car_transform);
+        }
     }
 
     make_control_panel() {
@@ -174,31 +249,29 @@ export class Crazy_Taxi extends Base_Scene {
             this.move_forward = false;
         });
         this.key_triggered_button("Left", ["a"], () => {
-            this.taxi_target_x_pos -= 13;
-            if (this.taxi_target_x_pos < -13) {
-                this.taxi_target_x_pos = -13;
+            if(!this.jump){
+                if (this.taxi_target_x_pos > (-1 * this.lane_spacing)) {
+                    this.taxi_target_x_pos -= this.lane_spacing;
+                }
             }
         });
         this.key_triggered_button("Right", ["d"], () => {
-            this.taxi_target_x_pos += 13;
-            if (this.taxi_target_x_pos > 13) {
-                this.taxi_target_x_pos = 13;
+            if(!this.jump){
+                if (this.taxi_target_x_pos < this.lane_spacing) {
+                    this.taxi_target_x_pos += this.lane_spacing;
+                }
             }
         });
-        /*this.key_triggered_button("Backwards", ["s"], () => {
-            this.move_back = true;
+        this.key_triggered_button("Slowdown", ["s"], () => {
+            this.slowdown = true;
         }, '#6E6460', () => {
-            this.move_back = false;
+            this.slowdown = false;
         });
-        this.key_triggered_button("Left", ["a"], () => {
-            //
+        this.key_triggered_button("Jump", [" "], () => {
+            if(this.taxi_target_y_pos == 0 && !this.jump){
+                this.jump = true;
+            }
         });
-        this.key_triggered_button("Right", ["d"], () => {
-            //
-        });
-        this.key_triggered_button("Jump", ["space"], () => {
-            //
-        });*/
     }
 
     display(context, program_state) {
@@ -212,11 +285,14 @@ export class Crazy_Taxi extends Base_Scene {
         //Code to draw background
         //----------------------------------------------------------------------------------------------------------------------------------------
 
-        if(this.move_forward){
-            this.far_z_loc -= Math.min(2,.5+.5*this.speedup_time);
-        }/*else{
-            this.far_z_loc -= Math.max(.5,.5-(3/20)*this.speedup_time);
+        /*if(this.move_forward){
+            this.far_z_loc -= this.speed;
+        }else if(this.slowdown){
+            this.far_z_loc -= this.speed
+        }else{
+            this.far_z_loc -= this.speed;
         }*/
+        this.far_z_loc -= this.speed;
 
         /*if(this.far_z_loc % 220 == 0 && this.far_z_loc != -220){
             this.chunks += 1;
@@ -227,8 +303,10 @@ export class Crazy_Taxi extends Base_Scene {
 
         let current_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
         let next_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*(this.chunks+1))).times(Mat4.rotation(Math.PI/2,1,0,0));
+        let prev_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*(this.chunks-1))).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, current_road_transform, this.materials.road);
         this.shapes.square.draw(context, program_state, next_road_transform, this.materials.road);
+        this.shapes.square.draw(context, program_state, prev_road_transform, this.materials.road);
         
         let lane_divider_transform = model_transform.times(Mat4.scale(.25,1,2)).times(Mat4.translation(0,.1,0)).times(Mat4.rotation(Math.PI/2,1,0,0));
         for(let i = 0; i < 106; i+=5){
@@ -236,12 +314,16 @@ export class Crazy_Taxi extends Base_Scene {
             this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i-(110*this.chunks),0)), this.materials.lane_divider);
             this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i-(110*(this.chunks+1)),0)), this.materials.lane_divider);
             this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i-(110*(this.chunks+1)),0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(-25,-i-(110*(this.chunks-1)),0)), this.materials.lane_divider);
+            this.shapes.square.draw(context, program_state, lane_divider_transform.times(Mat4.translation(25,-i-(110*(this.chunks-1)),0)), this.materials.lane_divider);
         }
         
         let current_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
         let next_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*(this.chunks+1))).times(Mat4.rotation(Math.PI/2,1,0,0));
+        let prev_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*(this.chunks-1))).times(Mat4.rotation(Math.PI/2,1,0,0));
         this.shapes.square.draw(context, program_state, current_floor_transform, this.materials.sand);
         this.shapes.square.draw(context, program_state, next_floor_transform, this.materials.sand);
+        this.shapes.square.draw(context, program_state, prev_floor_transform, this.materials.sand);
 
         let mountain_transform = model_transform.times(Mat4.scale(120,100,1)).times(Mat4.translation(0,.7,this.far_z_loc)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
         this.shapes.tri.draw(context, program_state, mountain_transform, this.materials.mountain);
@@ -260,25 +342,47 @@ export class Crazy_Taxi extends Base_Scene {
 
         //Code to draw a car
         //----------------------------------------------------------------------------------------------------------------------------------------
-        this.update_traffic();
-        this.move_and_draw_cars(context, program_state);
-        this.detect_collision();
+        this.update_objects(context, program_state);
+        this.draw_objects(context, program_state);
+        this.detect_collision(context, program_state);
 
     }
 
-    move_and_draw_cars(context, program_state) {
-        //move taxi
-        let target_x_transform = Mat4.translation(this.taxi_target_x_pos, 0, 0);
-        this.taxi_current_x_transform = target_x_transform.map((x, i) => Vector.from(this.taxi_current_x_transform[i]).mix(x, 0.2));
-        this.taxi_transform = this.taxi_current_x_transform.times(Mat4.translation(0, 0, this.far_z_loc + 218));
-        //draw taxi
+    update_objects(context, program_state) {
+        // handle taxi jump
+        if(this.jump){
+            this.jump_time += program_state.animation_delta_time / 1000;
+            this.taxi_target_y_pos = (this.taxi_target_y_pos >= 0) ? -160*(this.jump_time**2 - .5*this.jump_time) : 0;
+            if(this.taxi_target_y_pos == 0){
+                this.jump = false;
+                this.jump_time = 0;
+            }
+        }
+
+        // interpolate taxi transform
+        let target_xy_transform = Mat4.translation(this.taxi_target_x_pos, this.taxi_target_y_pos, 0);
+        this.taxi_interpolated_xy_transform = target_xy_transform.map((x, i) => Vector.from(this.taxi_interpolated_xy_transform[i]).mix(x, 0.2));
+
+        // update taxi transform
+        this.taxi_transform = this.taxi_interpolated_xy_transform.times(Mat4.translation(0, 0, this.far_z_loc + 218));
+
+        // move cars in traffic at constant speed, remove passed by cars, generate new cars ahead
+        this.update_traffic(context, program_state);
+
+        //--------------------- add additional object updates here------------//
+
+    }
+
+    draw_objects(context, program_state) {
+        // draw taxi
         this.draw_car(context, program_state, true, this.taxi_transform);
 
-        //move cars at constant speed and draw them
+        // draw cars in traffic
         for (let i = 0; i < this.cars_transform.length; i++) {
-            this.cars_transform[i] = this.cars_transform[i].times(Mat4.translation(0, 0, this.traffic_speed));
             this.draw_car(context, program_state, false, this.cars_transform[i], this.cars_color[i]);
         }
+
+        //--------------------- insert additional draw calls here------------//
     }
 
     draw_car(context, program_state, taxi, model_transform, color = this.taxi_color) {
@@ -312,14 +416,19 @@ export class Crazy_Taxi extends Base_Scene {
         }
     }
 
-    detect_collision() {
-        let taxi_z_pos = this.taxi_transform[2][3];
+    detect_collision(context, program_state) {
         let taxi_x_pos = this.taxi_target_x_pos;
+        let taxi_y_pos = this.taxi_transform[1][3];
+        let taxi_z_pos = this.taxi_transform[2][3];
         for (let i = 0; i < this.cars_transform.length; i++) {
-            let car_z_pos = this.cars_transform[i][2][3];
             let car_x_pos = this.cars_transform[i][0][3];
+            let car_y_pos = this.cars_transform[i][1][3];
+            let car_z_pos = this.cars_transform[i][2][3];
             let collision_detected = false;
-            if ((taxi_z_pos > car_z_pos) && (taxi_z_pos - car_z_pos < 12.3) && (Math.abs(taxi_x_pos - car_x_pos) < 4.8)) {collision_detected = true;}
+            if ((taxi_z_pos > car_z_pos) &&
+                (taxi_z_pos - car_z_pos < 12.3) &&
+                (taxi_y_pos - car_y_pos < 3) &&
+                (Math.abs(taxi_x_pos - car_x_pos) < 4.8)) {collision_detected = true;this.collision_detected = true;}
             if (collision_detected) {
                 this.cars_color[i] = hex_color("#FF0000");
             }
