@@ -165,7 +165,7 @@ export class Crazy_Taxi extends Base_Scene {
         this.taxi_target_y_pos = 0;
         this.taxi_interpolated_xy_transform = Mat4.identity();
         this.lane_spacing = 13;
-        this.traffic_speed = -6;
+        this.traffic_speed = -40;
         this.traffic_layers = 4; // the constant numbers of traffic layers always maintained on road
         this.traffic_layer_count = 0; // count of total traffic layers so far
         this.traffic_layer_spacing = -60;
