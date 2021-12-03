@@ -2,9 +2,10 @@ import {defs, tiny} from './examples/common.js';
 
 import {Skull} from './skull.js'
 import {Cactus} from './cactus.js'
+import {Text_Line} from "./game-score.js"
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Texture, Scene,
 } = tiny;
 const {Triangle, Square, Tetrahedron, Windmill, Cube, Rounded_Capped_Cylinder, Subdivision_Sphere} = defs;
 
@@ -32,6 +33,7 @@ class Base_Scene extends Scene {
             'r_cyl': new Rounded_Capped_Cylinder(25, 50),
             'skull': new Skull(),
             'cactus': new Cactus(),
+            'text': new Text_Line(15),
         };
         this.taxi_transform = Mat4.identity();
         this.taxi_color = hex_color("#FB9403");
@@ -75,7 +77,39 @@ class Base_Scene extends Scene {
                 {ambient: .5, diffusivity: .3, specularity: .5, color: hex_color("#ffffff")}),
             cactus: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .1, specularity: .1, color: hex_color("#29910f")}),
-            //------------------------------------------------------------------------
+            //game score materials
+            text_image: new Material(new defs.Textured_Phong(1),
+                {ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("assets/text.png")}),
+            game_score_square: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, specularity: 1, color: hex_color("#000000")}),
+            window2: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/windscreen.jpg", "NEAREST")}),
+            sand2: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/sand.jpg", "NEAREST")}),
+            road2: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/road.jpg", "NEAREST")}),
+            mountain2: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/mountain.jpg", "NEAREST")}),
+            mountain_tip2: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/snow.jpg", "NEAREST")}),
+            sky2: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/sky.jpg", "NEAREST")}),
+            taxi: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/taxi.jpg", "NEAREST")}),
         };
     }
 
@@ -426,27 +460,29 @@ export class Crazy_Taxi extends Base_Scene {
         let current_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
         let next_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*(this.chunks+1))).times(Mat4.rotation(Math.PI/2,1,0,0));
         let prev_floor_transform = model_transform.times(Mat4.scale(180,1,110)).times(Mat4.translation(0,0,-.945-2*(this.chunks-1))).times(Mat4.rotation(Math.PI/2,1,0,0));
-        this.shapes.square.draw(context, program_state, current_floor_transform, this.materials.sand);
-        this.shapes.square.draw(context, program_state, next_floor_transform, this.materials.sand);
-        this.shapes.square.draw(context, program_state, prev_floor_transform, this.materials.sand);
+        this.shapes.square.draw(context, program_state, current_floor_transform, this.materials.sand2);
+        this.shapes.square.draw(context, program_state, next_floor_transform, this.materials.sand2);
+        this.shapes.square.draw(context, program_state, prev_floor_transform, this.materials.sand2);
 
         let mountain_transform = model_transform.times(Mat4.scale(120,100,1)).times(Mat4.translation(0,.7,this.far_z_loc)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
-        this.shapes.tri.draw(context, program_state, mountain_transform, this.materials.mountain);
-        this.shapes.tri.draw(context, program_state, mountain_transform.times(Mat4.translation(0.6,-0.6,.1)), this.materials.mountain);
-        this.shapes.tri.draw(context, program_state, mountain_transform.times(Mat4.translation(-0.6,0.6,-.1)), this.materials.mountain);
+        this.shapes.tri.draw(context, program_state, mountain_transform, this.materials.mountain2);
+        this.shapes.tri.draw(context, program_state, mountain_transform.times(Mat4.translation(0.6,-0.6,.1)), this.materials.mountain2);
+        this.shapes.tri.draw(context, program_state, mountain_transform.times(Mat4.translation(-0.6,0.6,-.1)), this.materials.mountain2);
         let mountain_tip_transform = model_transform.times(Mat4.scale(37,30,1)).times(Mat4.translation(0,2.33,this.far_z_loc+1)).times(Mat4.rotation(5*Math.PI/4,0,0,1));
-        this.shapes.tri.draw(context, program_state, mountain_tip_transform, this.materials.mountain_tip);
-        this.shapes.tri.draw(context, program_state, mountain_tip_transform.times(Mat4.translation(1.94,-1.94,0)), this.materials.mountain_tip);
-        this.shapes.tri.draw(context, program_state, mountain_tip_transform.times(Mat4.translation(-1.94,1.94,0)), this.materials.mountain_tip);
+        this.shapes.tri.draw(context, program_state, mountain_tip_transform, this.materials.mountain_tip2);
+        this.shapes.tri.draw(context, program_state, mountain_tip_transform.times(Mat4.translation(1.94,-1.94,0)), this.materials.mountain_tip2);
+        this.shapes.tri.draw(context, program_state, mountain_tip_transform.times(Mat4.translation(-1.94,1.94,0)), this.materials.mountain_tip2);
 
         let sky_transform = model_transform.times(Mat4.scale(190,60,1)).times(Mat4.translation(0,1,this.far_z_loc-.5));
-        this.shapes.square.draw(context, program_state, sky_transform, this.materials.sky);
+        this.shapes.square.draw(context, program_state, sky_transform, this.materials.sky2);
 
 
         this.update_cars(context, program_state);
         this.draw_objects(context, program_state);
         this.detect_collision(context, program_state);
 
+        // handle score
+        this.update_and_draw_score(context, program_state);
     }
 
     update_cars(context, program_state) {
@@ -505,7 +541,7 @@ export class Crazy_Taxi extends Base_Scene {
         this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(2.05, 1.05, -3)).times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.scale(0.6, 0.6, 1)), this.materials.wheelrim);
         this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(2.05, 1.05, 3)).times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.scale(0.6, 0.6, 1)), this.materials.wheelrim);
         this.shapes.square.draw(context, program_state, model_transform.times(Mat4.translation(0, 4, -3.01)).times(Mat4.scale(2.2, 0.8, 1)), this.materials.window);
-        this.shapes.square.draw(context, program_state, model_transform.times(Mat4.translation(0, 4, 3.01)).times(Mat4.scale(2.2, 0.8, 1)), this.materials.window);
+        this.shapes.square.draw(context, program_state, model_transform.times(Mat4.translation(0, 4, 3.01)).times(Mat4.scale(2.2, 0.8, 1)), this.materials.window2);
         this.shapes.square.draw(context, program_state, model_transform.times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.translation(-1.5, 4, 2.41)).times(Mat4.scale(1.3, 0.8, 1)), this.materials.window);
         this.shapes.square.draw(context, program_state, model_transform.times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.translation(1.5, 4, 2.41)).times(Mat4.scale(1.3, 0.8, 1)), this.materials.window);
         this.shapes.square.draw(context, program_state, model_transform.times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.translation(-1.5, 4, -2.41)).times(Mat4.scale(1.3, 0.8, 1)), this.materials.window);
@@ -540,5 +576,21 @@ export class Crazy_Taxi extends Base_Scene {
                 this.cars_color[i] = hex_color("#FF0000");
             }
         }
+    }
+
+    update_and_draw_score(context, program_state) {
+        // draw square for text to be drawn on
+        let game_score_square_transform = Mat4.identity().times(Mat4.translation(136, 100, this.far_z_loc)).times(Mat4.scale(40, 6, 1));
+        this.shapes.square.draw(context, program_state, game_score_square_transform, this.materials.game_score_square);
+
+        // calculate score
+        let score = (-this.taxi_transform[2][3] >= 0) ? Math.floor(-this.taxi_transform[2][3]) : 0;
+        score = "Score:" + score.toString().padStart(6);
+
+        // draw text
+        let text_transform = Mat4.identity().times(Mat4.translation(-.75, -0.1, 1.01));
+        this.shapes.text.set_string(score, context.context);
+        this.shapes.text.draw(context, program_state, game_score_square_transform.times(text_transform).times(Mat4.scale(.09, .8, .3)), this.materials.text_image);
+        text_transform.post_multiply(Mat4.translation(0, -.06, 0));
     }
 }
