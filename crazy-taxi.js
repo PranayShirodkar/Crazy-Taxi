@@ -174,7 +174,7 @@ export class Crazy_Taxi extends Base_Scene {
         this.chunks = 0;
         this.taxi_target_x_pos = 0;
         this.taxi_target_y_pos = 0;
-        this.taxi_interpolated_xy_transform = Mat4.identity();
+        this.taxi_interpolated_x_transform = Mat4.identity();
         this.lane_spacing = 13;
         this.traffic_speed = -40;
         this.traffic_layers = 4; // the constant numbers of traffic layers always maintained on road
@@ -481,6 +481,13 @@ export class Crazy_Taxi extends Base_Scene {
     }
 
     update_objects(context, program_state) {
+        // interpolate taxi transform
+        let target_x_transform = Mat4.translation(this.taxi_target_x_pos, 0, 0);
+        this.taxi_interpolated_x_transform = target_x_transform.map((x, i) => Vector.from(this.taxi_interpolated_x_transform[i]).mix(x, 0.2));
+
+        // update taxi transform
+        this.taxi_transform = this.taxi_interpolated_x_transform.times(Mat4.translation(0, 0, this.far_z_loc + 218));
+
         // handle taxi jump
         if(this.jump){
             this.jump_time += program_state.animation_delta_time / 1000;
@@ -490,13 +497,7 @@ export class Crazy_Taxi extends Base_Scene {
                 this.jump_time = 0;
             }
         }
-
-        // interpolate taxi transform
-        let target_xy_transform = Mat4.translation(this.taxi_target_x_pos, this.taxi_target_y_pos, 0);
-        this.taxi_interpolated_xy_transform = target_xy_transform.map((x, i) => Vector.from(this.taxi_interpolated_xy_transform[i]).mix(x, 0.2));
-
-        // update taxi transform
-        this.taxi_transform = this.taxi_interpolated_xy_transform.times(Mat4.translation(0, 0, this.far_z_loc + 218));
+        this.taxi_transform[1][3] = this.taxi_target_y_pos;
 
         // move cars in traffic at constant speed, remove passed by cars, generate new cars ahead
         this.update_traffic(context, program_state);
