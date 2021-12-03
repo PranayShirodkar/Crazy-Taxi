@@ -196,6 +196,37 @@ export class Crazy_Taxi extends Base_Scene {
 
 
         this.init_traffic();
+
+        this.roadside_objects = 6;
+        this.right_cacti_transform = [];
+        this.left_cacti_transform = [];
+        this.right_skull_transform = [];
+        this.left_skull_transform = [];
+        this.init_roadside_objects();
+    }
+
+    init_roadside_objects(){
+        for(let i = 0; i < this.roadside_objects; i++){
+            let x_pos = (Math.random()*(220-35+1)) + 35;
+            let max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            let z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+        }
     }
 
     init_traffic() {
@@ -352,6 +383,12 @@ export class Crazy_Taxi extends Base_Scene {
         // this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,1,this.far_z_loc+218)), this.materials.plastic);
         //this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(-12,1,0)), this.materials.plastic);
 
+        //min x = [-220,-35], max x = [35,220], min z = [far_z_loc+200,far_z_loc+5]
+        //let cactus_transform = model_transform.times(Mat4.scale(.75,.75,1)).times(Mat4.translation(100,0,this.far_z_loc+130));
+        //this.shapes.cactus.draw(context, program_state, cactus_transform, this.materials.cactus);
+        //let skull_transform = model_transform.times(Mat4.scale(.75,.75,1)).times(Mat4.translation(-35,1,this.far_z_loc+200));
+        //this.shapes.skull.draw(context, program_state, skull_transform, this.materials.skull);
+
         //Code to draw a car
         //----------------------------------------------------------------------------------------------------------------------------------------
         this.update_objects(context, program_state);
@@ -395,6 +432,13 @@ export class Crazy_Taxi extends Base_Scene {
         }
 
         //--------------------- insert additional draw calls here------------//
+
+        for(let i = 0; i < this.roadside_objects; i++){
+            this.shapes.cactus.draw(context, program_state, this.right_cacti_transform[i], this.materials.cactus);
+            this.shapes.cactus.draw(context, program_state, this.left_cacti_transform[i], this.materials.cactus);
+            this.shapes.skull.draw(context, program_state, this.right_skull_transform[i], this.materials.skull);
+            this.shapes.skull.draw(context, program_state, this.left_skull_transform[i], this.materials.skull);
+        }
     }
 
     draw_car(context, program_state, taxi, model_transform, color = this.taxi_color) {
