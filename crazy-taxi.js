@@ -3,9 +3,6 @@ import {defs, tiny} from './examples/common.js';
 import {Skull} from './skull.js'
 import {Cactus} from './cactus.js'
 
-import {Shape_From_File} from './examples/obj-file-demo.js'
-
-
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
@@ -41,6 +38,7 @@ class Base_Scene extends Scene {
 
         // *** Materials
         this.materials = {
+            // background materials
             plastic: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: 1, specularity: 1, color: hex_color("#ff0000")}),
             road: new Material(new defs.Phong_Shader(),
@@ -56,7 +54,6 @@ class Base_Scene extends Scene {
             sky: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: 0, specularity: 1, color: hex_color("#87CEEB")}),
             // car materials
-            //------------------------------------------------------------------------
             chassis: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, specularity: 1, color: this.taxi_color}),
             wheel: new Material(new defs.Phong_Shader(),
@@ -73,6 +70,7 @@ class Base_Scene extends Scene {
                 {ambient: .4, diffusivity: .6, specularity: 1, color: hex_color("#AA0000")}),
             blackpaint: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: 1, specularity: 1, color: hex_color("#000000")}),
+            // roadside object materials
             skull: new Material(new defs.Phong_Shader(),
                 {ambient: .5, diffusivity: .3, specularity: .5, color: hex_color("#ffffff")}),
             cactus: new Material(new defs.Phong_Shader(),
@@ -87,13 +85,14 @@ class Base_Scene extends Scene {
         // display():  Called once per frame of animation. Here, the base class's display only does
         // some initial setup.
 
-        // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
+        // Leaving this here because it helps move around the scene manually and check bugs
         /*if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(Mat4.translation(0, -10, -30));
         }*/
 
+        // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         program_state.set_camera(Mat4.translation(0, -10, this.cam_z_loc));
@@ -151,7 +150,6 @@ class Base_Scene extends Scene {
 
         // *** Lights: *** Values of vector or point lights.
         //Changed light position
-        //const light_position = vec4(0, -70, -10, 1);
         const light_position = vec4(0, 10, -(this.cam_z_loc+30), 1);
         //Increased brightness
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**4)];
@@ -399,31 +397,15 @@ export class Crazy_Taxi extends Base_Scene {
 
     display(context, program_state) {
         super.display(context, program_state);
-        const blue = hex_color("#1a9ffa");
-        const yellow = hex_color("#ffe910");
-        const gray = hex_color("#a0a0a0");
         const white = hex_color("#ffffff");
         let model_transform = Mat4.identity();
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         //Code to draw background
         //----------------------------------------------------------------------------------------------------------------------------------------
-
-        /*if(this.move_forward){
-            this.far_z_loc -= this.speed;
-        }else if(this.slowdown){
-            this.far_z_loc -= this.speed
-        }else{
-            this.far_z_loc -= this.speed;
-        }*/
         this.far_z_loc -= this.speed;
 
-        /*if(this.far_z_loc % 220 == 0 && this.far_z_loc != -220){
-            this.chunks += 1;
-        }*/
         if(this.far_z_loc < -220*(this.chunks+2) && this.far_z_loc > -220*(this.chunks+3)){
             this.chunks += 1;
-
             this.update_roadside_objects();
         }
 
@@ -463,24 +445,14 @@ export class Crazy_Taxi extends Base_Scene {
         let sky_transform = model_transform.times(Mat4.scale(190,60,1)).times(Mat4.translation(0,1,this.far_z_loc-.5));
         this.shapes.square.draw(context, program_state, sky_transform, this.materials.sky);
 
-        // this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,1,this.far_z_loc+218)), this.materials.plastic);
-        //this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(-12,1,0)), this.materials.plastic);
 
-        //min x = [-220,-35], max x = [35,220], min z = [far_z_loc+200,far_z_loc+5]
-        //let cactus_transform = model_transform.times(Mat4.scale(.75,.75,1)).times(Mat4.translation(100,0,this.far_z_loc+130));
-        //this.shapes.cactus.draw(context, program_state, cactus_transform, this.materials.cactus);
-        //let skull_transform = model_transform.times(Mat4.scale(.75,.75,1)).times(Mat4.translation(-35,1,this.far_z_loc+200));
-        //this.shapes.skull.draw(context, program_state, skull_transform, this.materials.skull);
-
-        //Code to draw a car
-        //----------------------------------------------------------------------------------------------------------------------------------------
-        this.update_objects(context, program_state);
+        this.update_cars(context, program_state);
         this.draw_objects(context, program_state);
         this.detect_collision(context, program_state);
 
     }
 
-    update_objects(context, program_state) {
+    update_cars(context, program_state) {
         // interpolate taxi transform
         let target_x_transform = Mat4.translation(this.taxi_target_x_pos, 0, 0);
         this.taxi_interpolated_x_transform = target_x_transform.map((x, i) => Vector.from(this.taxi_interpolated_x_transform[i]).mix(x, 0.2));
@@ -501,9 +473,6 @@ export class Crazy_Taxi extends Base_Scene {
 
         // move cars in traffic at constant speed, remove passed by cars, generate new cars ahead
         this.update_traffic(context, program_state);
-
-        //--------------------- add additional object updates here------------//
-
     }
 
     draw_objects(context, program_state) {
@@ -514,8 +483,6 @@ export class Crazy_Taxi extends Base_Scene {
         for (let i = 0; i < this.cars_transform.length; i++) {
             this.draw_car(context, program_state, false, this.cars_transform[i], this.cars_color[i]);
         }
-
-        //--------------------- insert additional draw calls here------------//
 
         for(let i = 0; i < this.roadside_objects; i++){
             this.shapes.cactus.draw(context, program_state, this.right_cacti_transform[i], this.materials.cactus);
@@ -530,7 +497,6 @@ export class Crazy_Taxi extends Base_Scene {
     }
 
     draw_car(context, program_state, taxi, model_transform, color = this.taxi_color) {
-        // wheel_transform = wheel_transform.times(Mat4.rotation(-Math.PI / 4, 1, 0, 0));
         this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0, 2, 0)).times(Mat4.scale(2.4, 1, 6)), this.materials.chassis.override({color: color}));
         this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0, 4, 0)).times(Mat4.scale(2.4, 1, 3)), this.materials.chassis.override({color: color}));
         this.shapes.r_cyl.draw(context, program_state, model_transform.times(Mat4.translation(-2, 1.05, -3)).times(Mat4.rotation(Math.PI / 2, 0, 1, 0)), this.materials.wheel);
