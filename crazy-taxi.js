@@ -2,9 +2,10 @@ import {defs, tiny} from './examples/common.js';
 
 import {Skull} from './skull.js'
 import {Cactus} from './cactus.js'
+import {Text_Line} from "./game-score.js"
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Texture, Scene,
 } = tiny;
 const {Triangle, Square, Tetrahedron, Windmill, Cube, Rounded_Capped_Cylinder, Subdivision_Sphere} = defs;
 
@@ -32,6 +33,7 @@ class Base_Scene extends Scene {
             'r_cyl': new Rounded_Capped_Cylinder(25, 50),
             'skull': new Skull(),
             'cactus': new Cactus(),
+            'text': new Text_Line(15),
         };
         this.taxi_transform = Mat4.identity();
         this.taxi_color = hex_color("#FB9403");
@@ -75,7 +77,11 @@ class Base_Scene extends Scene {
                 {ambient: .5, diffusivity: .3, specularity: .5, color: hex_color("#ffffff")}),
             cactus: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .1, specularity: .1, color: hex_color("#29910f")}),
-            //------------------------------------------------------------------------
+            //game score materials
+            text_image: new Material(new defs.Textured_Phong(1),
+                {ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("assets/text.png")}),
+            game_score_square: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, specularity: 1, color: hex_color("#87CEEB")}),
         };
     }
 
@@ -447,6 +453,8 @@ export class Crazy_Taxi extends Base_Scene {
         this.draw_objects(context, program_state);
         this.detect_collision(context, program_state);
 
+        // handle score
+        this.update_and_draw_score(context, program_state);
     }
 
     update_cars(context, program_state) {
@@ -540,5 +548,21 @@ export class Crazy_Taxi extends Base_Scene {
                 this.cars_color[i] = hex_color("#FF0000");
             }
         }
+    }
+
+    update_and_draw_score(context, program_state) {
+        // draw square for text to be drawn on
+        let game_score_square_transform = Mat4.identity().times(Mat4.translation(122, 96, this.far_z_loc)).times(Mat4.scale(12, 6, 1));
+        this.shapes.square.draw(context, program_state, game_score_square_transform, this.materials.game_score_square);
+
+        // calculate score
+        let score = (-this.taxi_transform[2][3] >= 0) ? Math.floor(-this.taxi_transform[2][3]) : 0;
+        score = "Score:" + score.toString().padStart(6);
+
+        // draw text
+        let text_transform = Mat4.identity().times(Mat4.translation(-.9, .9, 1.01));
+        this.shapes.text.set_string(score, context.context);
+        this.shapes.text.draw(context, program_state, game_score_square_transform.times(text_transform).times(Mat4.scale(.3, .8, .3)), this.materials.text_image);
+        text_transform.post_multiply(Mat4.translation(0, -.06, 0));
     }
 }
