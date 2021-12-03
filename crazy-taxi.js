@@ -77,8 +77,6 @@ class Base_Scene extends Scene {
                 {ambient: .4, diffusivity: .1, specularity: .1, color: hex_color("#29910f")}),
             //------------------------------------------------------------------------
         };
-        // The white material and basic shader are used for drawing the outline.
-        this.white = new Material(new defs.Basic_Shader());
     }
 
     display(context, program_state) {
@@ -397,7 +395,6 @@ export class Crazy_Taxi extends Base_Scene {
 
     display(context, program_state) {
         super.display(context, program_state);
-        const white = hex_color("#ffffff");
         let model_transform = Mat4.identity();
 
         //Code to draw background
