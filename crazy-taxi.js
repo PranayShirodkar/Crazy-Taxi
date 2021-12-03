@@ -1,5 +1,10 @@
 import {defs, tiny} from './examples/common.js';
+
+import {Skull} from './skull.js'
+import {Cactus} from './cactus.js'
+
 import {Shape_From_File} from './examples/obj-file-demo.js'
+
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -28,6 +33,8 @@ class Base_Scene extends Scene {
             'tri': new Triangle(),
             'square': new Square(),
             'r_cyl': new Rounded_Capped_Cylinder(25, 50),
+            'skull': new Skull(),
+            'cactus': new Cactus(),
         };
         this.taxi_transform = Mat4.identity();
         this.taxi_color = hex_color("#FB9403");
@@ -66,6 +73,10 @@ class Base_Scene extends Scene {
                 {ambient: .4, diffusivity: .6, specularity: 1, color: hex_color("#AA0000")}),
             blackpaint: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: 1, specularity: 1, color: hex_color("#000000")}),
+            skull: new Material(new defs.Phong_Shader(),
+                {ambient: .5, diffusivity: .3, specularity: .5, color: hex_color("#ffffff")}),
+            cactus: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .1, specularity: .1, color: hex_color("#29910f")}),
             //------------------------------------------------------------------------
         };
         // The white material and basic shader are used for drawing the outline.
@@ -163,7 +174,7 @@ export class Crazy_Taxi extends Base_Scene {
         this.chunks = 0;
         this.taxi_target_x_pos = 0;
         this.taxi_target_y_pos = 0;
-        this.taxi_interpolated_xy_transform = Mat4.identity();
+        this.taxi_interpolated_x_transform = Mat4.identity();
         this.lane_spacing = 13;
         this.traffic_speed = -40;
         this.traffic_layers = 4; // the constant numbers of traffic layers always maintained on road
@@ -185,6 +196,118 @@ export class Crazy_Taxi extends Base_Scene {
 
 
         this.init_traffic();
+
+        this.roadside_objects = 3;
+        this.right_cacti_transform = [];
+        this.left_cacti_transform = [];
+        this.right_skull_transform = [];
+        this.left_skull_transform = [];
+
+        this.next_right_cacti_transform = [];
+        this.next_left_cacti_transform = [];
+        this.next_right_skull_transform = [];
+        this.next_left_skull_transform = [];
+        
+
+        this.init_roadside_objects();
+    }
+
+    init_roadside_objects(){
+        let x_pos = 0;
+        let max_z_pos = 0;
+        let z_pos = 0;
+        let rand_rot = 0;
+        for(let i = 0; i < this.roadside_objects; i++){
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+            //---------------------------------------------------------------------------------------------
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+        }
+    }
+
+    update_roadside_objects(){
+        this.right_cacti_transform = this.next_right_cacti_transform;
+        this.left_cacti_transform = this.next_left_cacti_transform;
+        this.right_skull_transform = this.next_right_skull_transform;
+        this.left_skull_transform = this.next_left_skull_transform;
+            
+        this.next_right_cacti_transform = [];
+        this.next_left_cacti_transform = [];
+        this.next_right_skull_transform = [];
+        this.next_left_skull_transform = [];
+
+        let x_pos = 0;
+        let max_z_pos = 0;
+        let z_pos = 0;
+        let rand_rot = 0;
+        for(let i = 0; i < this.roadside_objects; i++){
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
+        }
     }
 
     init_traffic() {
@@ -279,6 +402,7 @@ export class Crazy_Taxi extends Base_Scene {
         const blue = hex_color("#1a9ffa");
         const yellow = hex_color("#ffe910");
         const gray = hex_color("#a0a0a0");
+        const white = hex_color("#ffffff");
         let model_transform = Mat4.identity();
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
@@ -299,6 +423,8 @@ export class Crazy_Taxi extends Base_Scene {
         }*/
         if(this.far_z_loc < -220*(this.chunks+2) && this.far_z_loc > -220*(this.chunks+3)){
             this.chunks += 1;
+
+            this.update_roadside_objects();
         }
 
         let current_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
@@ -340,6 +466,12 @@ export class Crazy_Taxi extends Base_Scene {
         // this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(0,1,this.far_z_loc+218)), this.materials.plastic);
         //this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.translation(-12,1,0)), this.materials.plastic);
 
+        //min x = [-220,-35], max x = [35,220], min z = [far_z_loc+200,far_z_loc+5]
+        //let cactus_transform = model_transform.times(Mat4.scale(.75,.75,1)).times(Mat4.translation(100,0,this.far_z_loc+130));
+        //this.shapes.cactus.draw(context, program_state, cactus_transform, this.materials.cactus);
+        //let skull_transform = model_transform.times(Mat4.scale(.75,.75,1)).times(Mat4.translation(-35,1,this.far_z_loc+200));
+        //this.shapes.skull.draw(context, program_state, skull_transform, this.materials.skull);
+
         //Code to draw a car
         //----------------------------------------------------------------------------------------------------------------------------------------
         this.update_objects(context, program_state);
@@ -349,6 +481,13 @@ export class Crazy_Taxi extends Base_Scene {
     }
 
     update_objects(context, program_state) {
+        // interpolate taxi transform
+        let target_x_transform = Mat4.translation(this.taxi_target_x_pos, 0, 0);
+        this.taxi_interpolated_x_transform = target_x_transform.map((x, i) => Vector.from(this.taxi_interpolated_x_transform[i]).mix(x, 0.2));
+
+        // update taxi transform
+        this.taxi_transform = this.taxi_interpolated_x_transform.times(Mat4.translation(0, 0, this.far_z_loc + 218));
+
         // handle taxi jump
         if(this.jump){
             this.jump_time += program_state.animation_delta_time / 1000;
@@ -358,13 +497,7 @@ export class Crazy_Taxi extends Base_Scene {
                 this.jump_time = 0;
             }
         }
-
-        // interpolate taxi transform
-        let target_xy_transform = Mat4.translation(this.taxi_target_x_pos, this.taxi_target_y_pos, 0);
-        this.taxi_interpolated_xy_transform = target_xy_transform.map((x, i) => Vector.from(this.taxi_interpolated_xy_transform[i]).mix(x, 0.2));
-
-        // update taxi transform
-        this.taxi_transform = this.taxi_interpolated_xy_transform.times(Mat4.translation(0, 0, this.far_z_loc + 218));
+        this.taxi_transform[1][3] = this.taxi_target_y_pos;
 
         // move cars in traffic at constant speed, remove passed by cars, generate new cars ahead
         this.update_traffic(context, program_state);
@@ -383,6 +516,17 @@ export class Crazy_Taxi extends Base_Scene {
         }
 
         //--------------------- insert additional draw calls here------------//
+
+        for(let i = 0; i < this.roadside_objects; i++){
+            this.shapes.cactus.draw(context, program_state, this.right_cacti_transform[i], this.materials.cactus);
+            this.shapes.cactus.draw(context, program_state, this.left_cacti_transform[i], this.materials.cactus);
+            this.shapes.skull.draw(context, program_state, this.right_skull_transform[i], this.materials.skull);
+            this.shapes.skull.draw(context, program_state, this.left_skull_transform[i], this.materials.skull);
+            this.shapes.cactus.draw(context, program_state, this.next_right_cacti_transform[i], this.materials.cactus);
+            this.shapes.cactus.draw(context, program_state, this.next_left_cacti_transform[i], this.materials.cactus);
+            this.shapes.skull.draw(context, program_state, this.next_right_skull_transform[i], this.materials.skull);
+            this.shapes.skull.draw(context, program_state, this.next_left_skull_transform[i], this.materials.skull);
+        }
     }
 
     draw_car(context, program_state, taxi, model_transform, color = this.taxi_color) {
