@@ -197,35 +197,102 @@ export class Crazy_Taxi extends Base_Scene {
 
         this.init_traffic();
 
-        this.roadside_objects = 6;
+        this.roadside_objects = 3;
         this.right_cacti_transform = [];
         this.left_cacti_transform = [];
         this.right_skull_transform = [];
         this.left_skull_transform = [];
+
+        this.next_right_cacti_transform = [];
+        this.next_left_cacti_transform = [];
+        this.next_right_skull_transform = [];
+        this.next_left_skull_transform = [];
+        
+
         this.init_roadside_objects();
     }
 
     init_roadside_objects(){
+        let x_pos = 0;
+        let max_z_pos = 0;
+        let z_pos = 0;
         for(let i = 0; i < this.roadside_objects; i++){
-            let x_pos = (Math.random()*(220-35+1)) + 35;
-            let max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
-            let z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
             this.right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
 
             x_pos = (Math.random()*(220-35+1)) + 35;
             max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
-            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
             this.right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
 
             x_pos = (Math.random()*(-35+220+1)) - 220;
             max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
-            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
             this.left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
 
             x_pos = (Math.random()*(-35+220+1)) - 220;
             max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
-            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
             this.left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+            //---------------------------------------------------------------------------------------------
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.next_right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.next_right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.next_left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.next_left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+        }
+    }
+
+    update_roadside_objects(){
+        this.right_cacti_transform = this.next_right_cacti_transform;
+        this.left_cacti_transform = this.next_left_cacti_transform;
+        this.right_skull_transform = this.next_right_skull_transform;
+        this.left_skull_transform = this.next_left_skull_transform;
+            
+        this.next_right_cacti_transform = [];
+        this.next_left_cacti_transform = [];
+        this.next_right_skull_transform = [];
+        this.next_left_skull_transform = [];
+
+        let x_pos = 0;
+        let max_z_pos = 0;
+        let z_pos = 0;
+        for(let i = 0; i < this.roadside_objects; i++){
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.next_right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+
+            x_pos = (Math.random()*(220-35+1)) + 35;
+            max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.next_right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.next_left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+
+            x_pos = (Math.random()*(-35+220+1)) - 220;
+            max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
+            z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
+            this.next_left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
         }
     }
 
@@ -342,6 +409,8 @@ export class Crazy_Taxi extends Base_Scene {
         }*/
         if(this.far_z_loc < -220*(this.chunks+2) && this.far_z_loc > -220*(this.chunks+3)){
             this.chunks += 1;
+
+            this.update_roadside_objects();
         }
 
         let current_road_transform = model_transform.times(Mat4.scale(20,1,110)).times(Mat4.translation(0,0.05,-.945-2*this.chunks)).times(Mat4.rotation(Math.PI/2,1,0,0));
@@ -438,6 +507,10 @@ export class Crazy_Taxi extends Base_Scene {
             this.shapes.cactus.draw(context, program_state, this.left_cacti_transform[i], this.materials.cactus);
             this.shapes.skull.draw(context, program_state, this.right_skull_transform[i], this.materials.skull);
             this.shapes.skull.draw(context, program_state, this.left_skull_transform[i], this.materials.skull);
+            this.shapes.cactus.draw(context, program_state, this.next_right_cacti_transform[i], this.materials.cactus);
+            this.shapes.cactus.draw(context, program_state, this.next_left_cacti_transform[i], this.materials.cactus);
+            this.shapes.skull.draw(context, program_state, this.next_right_skull_transform[i], this.materials.skull);
+            this.shapes.skull.draw(context, program_state, this.next_left_skull_transform[i], this.materials.skull);
         }
     }
 
