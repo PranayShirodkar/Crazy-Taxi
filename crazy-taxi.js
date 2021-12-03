@@ -81,7 +81,7 @@ class Base_Scene extends Scene {
             text_image: new Material(new defs.Textured_Phong(1),
                 {ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("assets/text.png")}),
             game_score_square: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, specularity: 1, color: hex_color("#87CEEB")}),
+                {ambient: 1, diffusivity: 0, specularity: 1, color: hex_color("#000000")}),
         };
     }
 
@@ -552,7 +552,7 @@ export class Crazy_Taxi extends Base_Scene {
 
     update_and_draw_score(context, program_state) {
         // draw square for text to be drawn on
-        let game_score_square_transform = Mat4.identity().times(Mat4.translation(122, 96, this.far_z_loc)).times(Mat4.scale(12, 6, 1));
+        let game_score_square_transform = Mat4.identity().times(Mat4.translation(136, 100, this.far_z_loc)).times(Mat4.scale(40, 6, 1));
         this.shapes.square.draw(context, program_state, game_score_square_transform, this.materials.game_score_square);
 
         // calculate score
@@ -560,9 +560,9 @@ export class Crazy_Taxi extends Base_Scene {
         score = "Score:" + score.toString().padStart(6);
 
         // draw text
-        let text_transform = Mat4.identity().times(Mat4.translation(-.9, .9, 1.01));
+        let text_transform = Mat4.identity().times(Mat4.translation(-.75, -0.1, 1.01));
         this.shapes.text.set_string(score, context.context);
-        this.shapes.text.draw(context, program_state, game_score_square_transform.times(text_transform).times(Mat4.scale(.3, .8, .3)), this.materials.text_image);
+        this.shapes.text.draw(context, program_state, game_score_square_transform.times(text_transform).times(Mat4.scale(.09, .8, .3)), this.materials.text_image);
         text_transform.post_multiply(Mat4.translation(0, -.06, 0));
     }
 }
