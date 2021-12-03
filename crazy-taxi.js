@@ -216,46 +216,55 @@ export class Crazy_Taxi extends Base_Scene {
         let x_pos = 0;
         let max_z_pos = 0;
         let z_pos = 0;
+        let rand_rot = 0;
         for(let i = 0; i < this.roadside_objects; i++){
             x_pos = (Math.random()*(220-35+1)) + 35;
             max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
-            this.right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(220-35+1)) + 35;
             max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
-            this.right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(-35+220+1)) - 220;
             max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
-            this.left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(-35+220+1)) - 220;
             max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc+200);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc+5)+1)) + (this.far_z_loc+5);
-            this.left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
             //---------------------------------------------------------------------------------------------
             x_pos = (Math.random()*(220-35+1)) + 35;
             max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
-            this.next_right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(220-35+1)) + 35;
             max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
-            this.next_right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(-35+220+1)) - 220;
             max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
-            this.next_left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(-35+220+1)) - 220;
             max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
-            this.next_left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
         }
     }
 
@@ -273,26 +282,31 @@ export class Crazy_Taxi extends Base_Scene {
         let x_pos = 0;
         let max_z_pos = 0;
         let z_pos = 0;
+        let rand_rot = 0;
         for(let i = 0; i < this.roadside_objects; i++){
             x_pos = (Math.random()*(220-35+1)) + 35;
             max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
-            this.next_right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_right_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(220-35+1)) + 35;
             max_z_pos = (-39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
-            this.next_right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_right_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(-35+220+1)) - 220;
             max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
-            this.next_left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_left_cacti_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,0,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
 
             x_pos = (Math.random()*(-35+220+1)) - 220;
             max_z_pos = (39/37)*x_pos + (39*35/37) + (this.far_z_loc-20);
             z_pos = (Math.random()*(max_z_pos-(this.far_z_loc-220)+1)) + (this.far_z_loc-220);
-            this.next_left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)));
+            rand_rot = Math.random()*(2*Math.PI+1);
+            this.next_left_skull_transform.push(Mat4.scale(.75,.75,1).times(Mat4.translation(x_pos,1,z_pos)).times(Mat4.rotation(rand_rot,0,1,0)));
         }
     }
 
